@@ -2,7 +2,7 @@ import java.util.*;
 
 
 public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
-    private int mod;          // счетчик модификатора обьекта
+    private int mod;
     private int numCells = 3; // кол-во ячеек
     private int size = 0;     // размер таблицы
     private Pair<K, V>[] table; // массив пар
@@ -34,8 +34,8 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
             throw new NullPointerException();
         }
         if (table[hash] == null) {                // если ячейка пустая, то создаем новую пару (по хешу)
-            if (keySet().contains(key)){         // если в таблице уже существует такой ключ, то даем ему нове значение( по хешу)
-                while (table[++hash]==null || !table[hash].getKey().equals(key));
+            if (keySet().contains(key)) {         // если в таблице уже существует такой ключ, то даем ему нове значение( по хешу)
+                while (table[++hash] == null || !table[hash].getKey().equals(key)) ;
                 V o = table[hash].getValue();
                 table[hash] = new Pair<>(key, value);
                 return o;
@@ -71,9 +71,9 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
      */
     protected void rehash() {
         Map<K, V> map = toMap();
-        numCells = (table.length << 1) + 1; // ?
-        table = new Pair[numCells]; // создаем новую таблицу с соотв значением
-        putAll(map);//?  // переносим все значения из старой
+        numCells = (table.length << 1) + 1; // увеличение числа ячеек
+        table = new Pair[numCells]; // создаем новую таблицу с соотв числом ячеек
+        putAll(map);  // переносим все значения из старой таблицы в новую
         size = map.size();
         mod++;
     }
@@ -251,4 +251,5 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
     public Iteration iterator() {
         return new Iteration<Pair<K, V>>();
     }
+
 }
