@@ -1,8 +1,7 @@
 import java.util.*;
 
-
 public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
-    private int mod;
+    private int mod;          // счетчик для итератора
     private int numCells = 3; // кол-во ячеек
     private int size = 0;     // размер таблицы
     private Pair<K, V>[] table; // массив пар
@@ -33,34 +32,40 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
         if (value == null) {
             throw new NullPointerException();
         }
-        if (table[hash] == null) {                // если ячейка пустая, то создаем новую пару (по хешу)
-            if (keySet().contains(key)) {         // если в таблице уже существует такой ключ, то даем ему нове значение( по хешу)
-                while (table[++hash] == null || !table[hash].getKey().equals(key)) ;
-                V o = table[hash].getValue();
-                table[hash] = new Pair<>(key, value);
-                return o;
-            }
-            table[hash] = new Pair<>(key, value);
-            size++;
-        } else {
-            int i = hash;
-            while (i < table.length && table[i] != null) {
-                if (table[i].getKey() == key) {  // если в таблице уже существует такой ключ, то даем ему нове значение (по индексу)
-                    old = table[hash].getValue();
-                    table[hash].setValue(value);
-                    break;
-                }
-                i++;
-            }
-            if (i == table.length) {             // если вся таблица заполнена, то увеличиваем ее размер
+
+        // если в таблице уже существует такой ключ, то даем ему нове значение
+        if (keySet().contains(key)) {
+            // выполнится только при совпадении ключей и таким образом мы нашли индекс ячейки с ключом или поняли,
+            //что его нет
+            while ((table[hash] == null || !table[hash].getKey().equals(key)) && ++hash < table.length) ;
+            if (hash == table.length) {
                 rehash();
                 return put(key, value);
-            } else if (table[i] == null) {       // если ячейка пустая, то создаем новую пару (по индексу)
-                table[i] = new Pair<>(key, value);
+            } else {
+                old = table[hash].getValue();
+                table[hash] = new Pair<>(key, value);
                 size++;
             }
+        } else { // если ключа нет
+            //и ячейка таблицы пустая, записываем новую пару ключ значенение
+            if (table[hash] == null) {
+                table[hash] = new Pair<>(key, value);
+                size++;
+            } else {// иначе ищем пустую ячейку
+                while (hash < table.length && table[hash] != null)
+                    hash++;
+                // если таблица заполнена, то увеличиваем ее размер
+                if (hash == table.length) {
+                    rehash();
+                    return put(key, value);
+                } else { // иначе записываем в пустую ячейку
+                    table[hash] = new Pair<>(key, value);
+                    size++;
+                }
+            }
         }
-        if (size == new Double(numCells * 0.8).intValue()) // если таблица заполнена на 80%, увеличиваем размер
+        // если таблица заполнена на кф заполнения(0,75), увеличиваем размер
+        if (size == new Double(numCells * 0.75).intValue())
             rehash();
         mod++;
         return old;
@@ -78,6 +83,15 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
         mod++;
     }
 
+    private Map<K, V> toMap() {
+        Map<K, V> map = new HashMap<>();
+        for (Pair<K, V> pair : table) {
+            if (pair != null)
+                map.put(pair.getKey(), pair.getValue());
+        }
+        return map;
+    }
+
     /**
      * метод для поиска значения по ключу
      */
@@ -87,7 +101,7 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
         int hash = hashFunction(key);
         if (keySet().contains(key)) { // если существует такой ключ, то находим и возвращаем его значение
             int i = hash;
-            while (table[i] == null || (table[i] != null && table[i].getKey() != key)) // поиск по индексу
+            while (table[i] == null || !table[i].getKey().equals(key)) // поиск индекса ячейки с ключем
                 i++;
             value = table[i].getValue();
         }
@@ -102,14 +116,14 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
         int hash = hashFunction(key);
         if (keySet().contains(key)) { // если существует такой ключ, то находим пару и заменяем ее на null
             int i = hash;
-            while (table[i] != null && table[i].getKey() != key) // поиск по индексу
+            while (table[i] == null || !table[i].getKey().equals(key)) // поиск индекса ячейки с ключем
                 i++;
             Pair<K, V> old = table[i];
             table[i] = null;  // замена пары на null
+            mod++;
             size--;
             return old.getValue();
         }
-        mod++;
         return null;
     }
 
@@ -206,14 +220,6 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
 
     }
 
-    private Map<K, V> toMap() {
-        Map<K, V> map = new HashMap<>();
-        for (Pair<K, V> pair : table) {
-            if (pair != null)
-                map.put(pair.getKey(), pair.getValue());
-        }
-        return map;
-    }
 
     private class Iteration<T> implements Iterator<T> {
         int i = 0, mod;
@@ -225,24 +231,37 @@ public class OpenTable<K, V> implements Map<K, V>, Iterable<Pair> {
 
         @Override
         public boolean hasNext() {
+            if (i == OpenTable.this.table.length)
+                return false;
             do {
-                current = (T) OpenTable.this.table[i++];
-            } while (current == null && i < OpenTable.this.numCells);
+                current = (T) OpenTable.this.table[i];
+            } while (++i < OpenTable.this.numCells && current == null);
             return current != null;
         }
 
         @Override
         public T next() {
-            if (mod != OpenTable.this.mod)
-                throw new ConcurrentModificationException();
+            try {
+                if (mod != OpenTable.this.mod)
+                    throw new ConcurrentModificationException();
+            } catch (ConcurrentModificationException e) {
+                System.err.println("err 1 : вызов недопустимого метода в цикле");
+                System.exit(1);
+            }
+
             return current;
         }
 
         @Override
         public void remove() {
-            if (mod != OpenTable.this.mod)
-                throw new ConcurrentModificationException();
-            OpenTable.this.remove(current);
+            try {
+                if (mod != OpenTable.this.mod)
+                    throw new ConcurrentModificationException();
+            } catch (ConcurrentModificationException e) {
+                System.err.println("err 1 : вызов недопустимого метода в цикле");
+                System.exit(1);
+            }
+            OpenTable.this.remove(((Pair) current).getKey());
             current = null;
             mod++;
         }

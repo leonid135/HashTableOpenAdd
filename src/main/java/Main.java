@@ -1,38 +1,136 @@
 
+import java.io.*;
+import java.util.Iterator;
+import java.util.Scanner;
+
 public class Main {
-    static public void main(String[] args) {
-        OpenTable<String, String> table = new OpenTable<>();
+    static OpenTable<String, String> table = new OpenTable<>();
+
+    static String path = null;
+
+    static void commit() {
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(new File(path), false);
+            for (Pair p : table) {
+                fos.write((p.getKey() + "->" + p.getValue() + "\n").getBytes());
+                fos.flush();
+            }
+            fos.close();
+        } catch (IOException e) {
+            System.err.println("error 2 :  ошибка работы с файлом " + path);
+
+            System.exit(2);
+        }
+    }
+
+    static public void main(String[] args) throws IOException {
+
+        if (args.length == 1) {
 
 
+            try {
+
+
+                Scanner sc = new Scanner(new File(args[0]));
+                path = args[0];
+                while (sc.hasNext()) {
+                    String[] pair = sc.nextLine().split("->");
+                    table.put(pair[0], pair[1]);
+
+                }
+            } catch (IOException e) {
+                System.out.println("error 4 : неверный формат " + path);
+            }
+
+
+        }
+        if (path != null)
+            System.out.println("DB mode ON");
+        else
+            System.out.println("DB mode OFF");
+        System.out.println("все операции совершаются через enter");
+        System.out.println("test - тестирует программу");
+        System.out.println("exit - выход");
+        System.out.println("add - добавляет пару ключ значение");
+        System.out.println("delete - удаляет пару по ключу");
+        System.out.println("get - выводит значение по ключу");
+        System.out.println("print - печатает таблицу");
+        System.out.println("clear - очищает таблицу");
+        System.out.println("keys - выводит множество имеющихся ключей");
+        System.out.println("values - выводит множество имеющихся значений");
+        System.out.println("empty - проверка на наличие элементов в таблице");
+        System.out.println("size - выводит размер таблицы");
+        System.out.println("entrySet - выводит множество имеющихся пар ключ значение");
+        table.print();
+        BufferedReader br = null;
+        br = new BufferedReader(new InputStreamReader(System.in));
+        while (true) {
+            String command = br.readLine();
+            if (command.equals("test")) test();
+            if (command.equals("exit")) break;
+            if (command.equals("add")) {
+                table.put(br.readLine(), br.readLine());
+                table.print();
+            }
+            if (command.equals("delete")) {
+                table.remove(br.readLine());
+                table.print();
+            }
+            if (command.equals("get"))
+                System.out.println(table.get(br.readLine()));
+            if (command.equals("print"))
+                table.print();
+            if (command.equals("clear")) {
+                table.clear();
+            }
+            if (command.equals("keys")) {
+                System.out.println(table.keySet());
+            }
+            if (command.equals("values")) {
+                System.out.println(table.values());
+            }
+            if (command.equals("empty")) {
+                System.out.println(table.isEmpty());
+            }
+            if (command.equals("size")) {
+                System.out.println(table.size());
+            }
+            if (command.equals("entrySet")) {
+                System.out.println(table.entrySet());
+            }
+            if (path != null)
+                commit();
+        }
+
+    }
+
+    private static void test() {
         System.out.println("Проверка метода put  ");
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-        table.put("каждый", "красный");
-        table.put("охотник", "оранжевый");
-        table.put("желает", "желтый");
-        table.put("знать", "зеленый");
-        table.put("где", "голубой");
-        table.put("сидит", "синий");
-        table.put("фазан", "фиолетовый");
+        table.put("i", "you");
+        table.put("we", "they");
+        table.put("muu", "mou");
+        table.put("now", "know");
+        table.put("where", "k");
         table.print();
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
 
         System.out.println("Проверка метода remove/ метода put  ");
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-        table.remove("каждый");
-        table.remove("охотник");
-        table.remove("желает");
-        table.remove("сидит");
-        table.put("знать","know");
-        table.put("где","where");
-        table.put("фазан","fazan");
+        table.remove("i");
+        table.remove("now");
+        table.remove("where");
+        table.put("we", "lia");
+        table.put("muu", "trr");
         table.print();
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
         System.out.println("Проверка метода get  ");
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-        System.out.println(table.get("где"));
-        System.out.println(table.get("фазан"));
+        System.out.println(table.get("we"));
+        System.out.println(table.get("muu"));
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
 
@@ -57,20 +155,18 @@ public class Main {
 
         System.out.println("Проверка метода containsKey  ");
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-        table.put("каждый", "красный");
-        table.put("охотник", "оранжевый");
-        table.put("желает", "желтый");
-        table.put("знать", "зеленый");
-        table.put("где", "голубой");
-        table.put("сидит", "синий");
-        table.put("фазан", "фиолетовый");
-        System.out.println(table.containsKey("каждый"));
+        table.put("i", "you");
+        table.put("we", "they");
+        table.put("muu", "mou");
+        table.put("now", "know");
+        table.put("where", "k");
+        System.out.println(table.containsKey("i"));
         System.out.println(table.containsKey("фффффф"));
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
         System.out.println("Проверка метода containsValue  ");
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
-        System.out.println(table.containsValue("красный"));
+        System.out.println(table.containsValue("you"));
         System.out.println(table.containsValue("фффффф"));
         System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
 
@@ -94,6 +190,13 @@ public class Main {
         for (Pair p : table) {
             System.out.println(p);
         }
-
+        System.out.println("Проверка remove в iterator");
+        System.out.println("---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------");
+        Iterator it = table.iterator();
+        while (it.hasNext()) {
+            it.remove();
+            table.print();
+        }
+        table.print();
     }
 }
